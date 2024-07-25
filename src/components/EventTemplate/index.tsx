@@ -8,11 +8,13 @@ const EventTemplate = ({
   time,
   title,
   img,
+  id,
 }: {
   host: string;
   time: string;
   title: string;
   img: string;
+  id: string;
 }) => {
   const itemClass = "flex items-center gap-2 capitalize text-sm";
   const btnClass = "flex items-center gap-0.5 hover:underline";
@@ -58,7 +60,7 @@ const EventTemplate = ({
         </div>
         <div>
           <Link
-            to={`${routes.attendants}/${title}`}
+            to={`${routes.attendants}/${id}`}
             className="flex items-center gap-0.5 hover:underline hover:text-deep-red-100"
           >
             <FaEye />

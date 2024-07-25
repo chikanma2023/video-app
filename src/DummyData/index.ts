@@ -5,22 +5,34 @@ import Profile3 from "@/assets/img/media/profile-block3.jpg";
 
 export const events = [
   {
+    id: "1",
     host: "Andru Hebo",
     time: "9:00am- 5:00 pm",
-    title: "Digital Business Summit - 2023",
+    title: "Nasa Space Apps Challenge kicks off in Bangladesh",
     img: Image2,
+    isDone: true,
+    eventType: "virtual event",
+    totalSeat: "350 / 175",
   },
   {
+    id: "2",
     host: "Andru Hebo",
     time: "9:00am- 5:00 pm",
-    title: "Digital Business Summit - 2023",
+    title: "Business event processing architecture Event consumer 2023",
     img: Image2,
+    isDone: false,
+    eventType: "physical event",
+    totalSeat: "350 / 175",
   },
   {
+    id: "3",
     host: "Andru Hebo",
     time: "9:00am- 5:00 pm",
-    title: "Digital Business Summit - 2023",
+    title: "Providing data for dashboard display of real-time business",
     img: Image2,
+    isDone: true,
+    eventType: "physical event",
+    totalSeat: "350 / 175",
   },
 ];
 

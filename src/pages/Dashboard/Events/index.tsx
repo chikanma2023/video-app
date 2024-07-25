@@ -1,6 +1,6 @@
 import { FaPlus } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Dropdown,
   DropdownTrigger,
@@ -13,16 +13,21 @@ import PageIndicator from "@/components/Page-Indicator";
 import EventTemplate from "@/components/EventTemplate";
 import { events } from "@/DummyData/index";
 
-const filters = [
-  "Coming Events",
-  "Past Events",
-  "Public Event",
-  "Private Events",
-];
-
 const Events = () => {
   const [filter, setFilter] = useState<string>("All Events");
+  const filters = ["All Events", "Coming Events", "Past Events"];
+
   const selectFilterString = (arg: string) => setFilter(arg);
+
+  const filterResult = useMemo(() => {
+    if (filter !== "All Events") {
+      const isDone = filter === "Past Events" ? true : false;
+      return events.filter((event) => event.isDone === isDone);
+    } else {
+      return events;
+    }
+  }, [filter]);
+
   return (
     <div className="flex flex-col gap-8">
       <PageIndicator>
@@ -62,7 +67,7 @@ const Events = () => {
         </div>
       </PageIndicator>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {events.map((event) => (
+        {filterResult.map((event) => (
           <EventTemplate key={event.title} {...event} />
         ))}
       </div>

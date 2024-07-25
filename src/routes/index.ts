@@ -6,7 +6,7 @@ export const routes = {
   events: "/dashboard/events",
   events_details: "/dashboard/events-details",
   createEvent: "/dashboard/create-event",
-  attendants: "/dashboard/attendees",
+  attendants: "/dashboard/event/attendees",
   profile: "/dashboard/profile",
   chats: "/dashboard/chats",
   edit_profile: "/dashboard/edit-profile",
