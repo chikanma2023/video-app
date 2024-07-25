@@ -1,0 +1,249 @@
+import { useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
+import { FiVideo, FiVideoOff, FiMic, FiMicOff } from "react-icons/fi";
+
+// WebRTC configuration
+const configuration: RTCConfiguration = {
+  iceServers: [
+    {
+      urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
+    },
+  ],
+  iceCandidatePoolSize: 10,
+};
+// Initailize RTC Connection btw client and server
+const socket = io("http://localhost:3001", { transports: ["websocket"] });
+
+let peerConnection;
+let deviceLocalStream;
+let RemoteVideoStream;
+let deviceLocalVideo;
+
+let startButton;
+let hangUpButton;
+let muteAudioButton;
+
+socket.on("message", (event) => {
+  if (!deviceLocalStream) {
+    console.log("not ready yet");
+    return;
+  }
+
+  switch (event.type) {
+    case "offer":
+      handleOffer(event);
+      break;
+    case "answer":
+      handleAnswer(event);
+      break;
+    case "candidate":
+      handleCandidate(event);
+      break;
+    case "ready":
+      // if (peerConnection) {
+      //   console.log("already in call, ignoring");
+      //   return;
+      // }
+      makeCall();
+      break;
+    case "end":
+      if (peerConnection) {
+        hangup();
+      }
+    default:
+      console.log("unhandled:", event);
+      break;
+  }
+});
+
+// THIS FUNCTION ADDS A USER TO THE CALL ON THE CLIENT SIDE
+const makeCall = async () => {
+  try {
+    peerConnection = new RTCPeerConnection(configuration);
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        const userMessage = {
+          type: "candidate",
+          candidate: null,
+        };
+        if (event.candidate) {
+          userMessage.candidate = event.candidate.candidate;
+          userMessage.sdpMid = event.candidate.sdpMid; // Session Description Protocol Media Id
+          userMessage.sdpMLineIndex = event.candidate.sdpMLineIndex; // Seasion Description Media Line Index
+        }
+        // Send user data to the server to create connection for a new user
+        socket.emit("message", userMessage);
+      }
+    };
+    // THIS SECTION ADDS NEW USER TO CONNECTION (ROOM)
+
+    // Get Other Users Media Stream
+    peerConnection.ontrack = (event) => {
+      RemoteVideoStream.current.srcObject = event.streams[0];
+    };
+    // Get Local User Media Stream and Add it to Remote streem
+    deviceLocalStream
+      .getTracks()
+      .forEach((track) => peerConnection.addTrack(track, deviceLocalStream));
+
+    const offer = await peerConnection.createOffer();
+    socket.emit("message", { type: "offer", sdp: offer.sdp });
+    await peerConnection.setLocalDescription(offer);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// THIS FUNCTION ADDS A USER TO THE CALL ON THE SERVER SIDE
+// It transmits media from the server side to the server side
+const handleOffer = async (offer) => {
+  // if (peerConnection) {
+  //   console.log("Error: existing peerconnection");
+  //   return;
+  // }
+  try {
+    peerConnection = new RTCPeerConnection(configuration);
+    peerConnection.onicecandidate = (event) => {
+      const userMessage = {
+        type: "candidate",
+        candidate: null,
+      };
+      if (event.candidate) {
+        userMessage.candidate = event.candidate.candidate;
+        userMessage.sdpMid = event.candidate.sdpMid;
+        userMessage.sdpMLineIndex = event.candidate.sdpMLineIndex;
+      }
+      socket.emit("message", userMessage);
+    };
+    peerConnection.ontrack = (event) =>
+      (RemoteVideoStream.current.srcObject = event.streams[0]);
+    deviceLocalStream
+      .getTracks()
+      .forEach((track) => peerConnection.addTrack(track, deviceLocalStream));
+    await peerConnection.setRemoteDescription(offer);
+
+    const answer = await peerConnection.createAnswer();
+    socket.emit("message", { type: "answer", sdp: answer.sdp });
+    await peerConnection.setLocalDescription(answer);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const handleAnswer = async (answer) => {
+  if (!peerConnection) {
+    console.log("No one has joined the meeting");
+    return;
+  }
+  try {
+    await peerConnection.setRemoteDescription(answer);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// This function is responsible for adding user to RTCPeerConnection
+const handleCandidate = async (candidate) => {
+  try {
+    if (!peerConnection) {
+      console.log("No one has joined the meeting");
+      return;
+    }
+    if (!candidate) {
+      await peerConnection.addIceCandidate(null);
+    } else {
+      await peerConnection.addIceCandidate(candidate);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const hangup = async () => {
+  if (!peerConnection) {
+    peerConnection.close();
+    peerConnection = null;
+  }
+
+  deviceLocalStream.getTracks().forEach((track) => track.stop());
+  deviceLocalStream = null;
+  startButton.current.disabled = false;
+  hangUpButton.current.disabled = true;
+  muteAudioButton.current.disabled = true;
+};
+
+const VideApp = () => {
+  startButton = useRef(null);
+  hangUpButton = useRef(null);
+  muteAudioButton = useRef(null);
+  deviceLocalVideo = useRef(null);
+  RemoteVideoStream = useRef(null);
+
+  useEffect(() => {
+    hangUpButton.current.disabled = true;
+    muteAudioButton.current.disabled = true;
+  }, []);
+  const [audioState, setAudioState] = useState<boolean>(false);
+
+  const startCall = async () => {
+    try {
+      deviceLocalStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: { echoCancellation: true },
+      });
+      deviceLocalVideo.current.srcObject = deviceLocalStream;
+    } catch (error) {
+      console.log(error);
+    }
+
+    startButton.current.disabled = true;
+    hangUpButton.current.disabled = false;
+    muteAudioButton.current.disabled = false;
+
+    socket.emit("message", { type: "ready" });
+  };
+
+  const endCall = async () => {
+    hangup();
+    socket.emit("message", { type: "end" });
+  };
+
+  const muteMicrophone = () => {
+    if (audioState) {
+      deviceLocalVideo.current.muted = true;
+      setAudioState(false);
+    } else {
+      deviceLocalVideo.current.muted = false;
+      setAudioState(true);
+    }
+  };
+
+  // console.log(RemoteVideoStream.current);
+
+  return (
+    <div>
+      <div>
+        <video ref={deviceLocalVideo} autoPlay playsInline src=" "></video>
+        <video ref={RemoteVideoStream} autoPlay playsInline src=" "></video>
+      </div>
+
+      <div>
+        <button
+          ref={startButton}
+          onClick={startCall}
+          className="bg-red-500 rounded p-2 text-white"
+        >
+          <FiVideo />
+        </button>
+        <button ref={hangUpButton} onClick={endCall}>
+          <FiVideoOff />
+        </button>
+        <button ref={muteAudioButton} onClick={muteMicrophone}>
+          {audioState ? <FiMic /> : <FiMicOff />}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default VideApp;
