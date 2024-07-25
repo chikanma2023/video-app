@@ -13,7 +13,6 @@
     "@hookform/resolvers": "^3.9.0",
     "@nextui-org/react": "^2.4.6",
     "@rollup/plugin-inject": "^5.0.5",
-    "@rollup/rollup-win32-x64-msvc": "^4.19.0",
     "@types/react-icons": "^3.0.0",
     "@types/react-router-dom": "^5.3.3",
     "@types/simple-peer": "^9.11.8",
