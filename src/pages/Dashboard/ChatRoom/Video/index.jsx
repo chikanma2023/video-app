@@ -13,9 +13,14 @@ const configuration = {
   iceCandidatePoolSize: 10,
 };
 // https://video-app-server-nu.vercel.app/
-const socket = io(" https://video-app-server-nu.vercel.app", {
-  transports: ["websocket"],
-});
+const socket = io(
+  "https://vercel.com/chikanma2023s-projects/video-app-server",
+  {
+    transports: ["websocket"],
+  }
+);
+
+// const socket = io("https://your-project-name.vercel.app");
 
 // Initialize RTC Connection between client and server
 // const socket = io("http://localhost:3001", {
