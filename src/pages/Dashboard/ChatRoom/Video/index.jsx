@@ -13,12 +13,9 @@ const configuration = {
   iceCandidatePoolSize: 10,
 };
 // https://video-app-server-nu.vercel.app/
-const socket = io(
-  "https://vercel.com/chikanma2023s-projects/video-app-server",
-  {
-    transports: ["websocket"],
-  }
-);
+const socket = io("https://video-app-server-nu.vercel.app/", {
+  transports: ["websocket"],
+});
 
 // const socket = io("https://your-project-name.vercel.app");
 
@@ -70,22 +67,49 @@ const VideoApp = () => {
     };
   }, [deviceLocalStream]);
 
+  // Handling ICE candidates and signaling
+  // const makeCall = async () => {
+  //   try {
+  //     peerConnection = new RTCPeerConnection(configuration);
+  //     peerConnection.onicecandidate = (event) => {
+  //       if (event.candidate) {
+  //         socket.emit("message", {
+  //           type: "candidate",
+  //           candidate: event.candidate,
+  //         });
+  //       }
+  //     };
+  //     // other necessary setups
+  //   } catch (error) {
+  //     console.error("Error creating call:", error);
+  //   }
+  // };
+
   //Host Call Function
   // THIS FUNCTION ADDS A USER TO THE CALL ON THE CLIENT SIDE
   const makeCall = async () => {
     try {
-      peerConnection = new RTCPeerConnection(configuration); // Create New User Connection on the client
+      peerConnection = new RTCPeerConnection(configuration);
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          const message = {
+          socket.emit("message", {
             type: "candidate",
-            candidate: event.candidate.candidate,
-            sdpMid: event.candidate.sdpMid,
-            sdpMLineIndex: event.candidate.sdpMLineIndex,
-          };
-          socket.emit("message", message);
+            candidate: event.candidate,
+          });
         }
       };
+      // peerConnection = new RTCPeerConnection(configuration); // Create New User Connection on the client
+      // peerConnection.onicecandidate = (event) => {
+      //   if (event.candidate) {
+      //     const message = {
+      //       type: "candidate",
+      //       candidate: event.candidate.candidate,
+      //       sdpMid: event.candidate.sdpMid,
+      //       sdpMLineIndex: event.candidate.sdpMLineIndex,
+      //     };
+      //     socket.emit("message", message);
+      //   }
+      // };
       peerConnection.ontrack = (event) => {
         const newStream = event.streams[0];
         setStreams((prevStreams) => {
