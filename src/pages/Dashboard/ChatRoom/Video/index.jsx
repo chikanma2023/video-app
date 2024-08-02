@@ -12,11 +12,15 @@ const configuration = {
   ],
   iceCandidatePoolSize: 10,
 };
-
-// Initialize RTC Connection between client and server
-const socket = io("http://localhost:3001", {
+// https://video-app-server-nu.vercel.app/
+const socket = io(" https://video-app-server-nu.vercel.app", {
   transports: ["websocket"],
 });
+
+// Initialize RTC Connection between client and server
+// const socket = io("http://localhost:3001", {
+//   transports: ["websocket"],
+// });
 
 let peerConnection = null;
 let deviceLocalStream = null;
