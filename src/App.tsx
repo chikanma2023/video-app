@@ -6,7 +6,7 @@ import HomeLayout from "./layout/Home";
 import DashboardLayout from "./layout/Admin";
 
 // Pages
-import Home from "./pages/Home";
+// import Home from "./pages/Home";
 import SignUp from "./pages/Signup";
 import SignIn from "./pages/Signin";
 
@@ -28,7 +28,8 @@ const router = createBrowserRouter([
     path: "/",
     element: <HomeLayout />,
     children: [
-      { path: routes.home, element: <Home /> },
+      { path: routes.home, element: <VideoApp /> },
+      // { path: routes.home, element: <Home /> },
       { path: routes.signup, element: <SignUp /> },
       { path: routes.signin, element: <SignIn /> },
     ],
